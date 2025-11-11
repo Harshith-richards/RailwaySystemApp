@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Railway System — MongoDB Executor</title>
+  <style>
+    /* Modern Font and Reset */
+    body {
+      font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      background: #f0f2f5; /* Light background */
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    
+    /* Header and Container */
+    h2 { color: #007bff; margin-bottom: 5px; }
+    p { margin-bottom: 20px; }
+    #executor-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Command Section Styling */
+    .command-section {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      text-align: left;
+    }
+    .command-section h3 {
+      color: #555;
+      margin-top: 0;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 10px;
+      font-size: 1.2em;
+    }
+
+    /* Input Fields */
+    input[type="text"], input[type="number"] {
+      padding: 10px;
+      margin: 5px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      width: calc(100% - 100px); /* Adjust width for labels */
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    .input-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .input-group label {
+        width: 90px;
+        font-weight: bold;
+        margin-right: 10px;
+        color: #666;
+        font-size: 0.95em;
+    }
+
+    /* Command Buttons */
+    .command-buttons button {
+      padding: 10px 20px;
+      font-size: 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      color: white;
+      border: none;
+      transition: background-color 0.2s ease;
+      margin-right: 10px;
+    }
+    .command-buttons button:hover {
+      opacity: 0.9;
+    }
+    .btn-insert { background-color: #28a745; } /* Green for Insert */
+    .btn-find { background-color: #007bff; } /* Blue for Find */
+    .btn-delete { background-color: #dc3545; } /* Red for Delete */
+    .btn-utility { background-color: #6c757d; } /* Gray for Utility */
+
+    /* Output Area */
+    #output-container {
+      margin-top: 20px;
+      text-align: left;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      background: #f9f9f9;
+    }
+    pre {
+      margin: 5px 0 0 0;
+      padding: 10px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 14px;
+      color: #333;
+      white-space: pre-wrap; /* Ensure text wraps */
+      word-break: break-all;
+    }
+    .success { color: #28a745; font-weight: bold; }
+    .error { color: #dc3545; font-weight: bold; }
+    .status-text { font-size: 1.1em; padding: 5px 0; }
+  </style>
+</head>
+<body>
+
+<div id="executor-container">
+  <h2>🚅 Railway System — MongoDB Command Executor</h2>
+  <p>Use the structured inputs and buttons below to interact with the **Trains** collection.</p>
+  
+  <div id="status-message" class="status-text"></div>
+
+  <div class="command-section">
+    <h3>➕ Insert New Train (Insert One)</h3>
+    <div class="input-group">
+        <label for="train_no">Train No:</label>
+        <input type="number" id="train_no" placeholder="e.g., 101" required>
+    </div>
+    <div class="input-group">
+        <label for="train_name">Train Name:</label>
+        <input type="text" id="train_name" placeholder="e.g., Rajdhani Express" required>
+    </div>
+    <div class="input-group">
+        <label for="destination">Destination:</label>
+        <input type="text" id="destination" placeholder="e.g., Delhi" required>
+    </div>
+    <button class="btn-insert" onclick="executeCommand('insertOne')">Execute Insert One</button>
+  </div>
+
+  <div class="command-section command-buttons">
+    <h3>🔍 Query & Utility Commands</h3>
+    <div class="input-group">
+        <label for="query_train_no">Train No Query:</label>
+        <input type="number" id="query_train_no" placeholder="Optional: Enter a Train No">
+    </div>
+    <button class="btn-find" onclick="executeCommand('find')">Execute Find (All/Query)</button>
+    <button class="btn-delete" onclick="executeCommand('deleteOne')">Execute Delete One</button>
+    <button class="btn-utility" onclick="executeCommand('countDocuments')">Count Total Trains</button>
+  </div>
+
+  <div id="output-container">
+      <div class="status-text">Command Output:</div>
+      <pre id="output">Results will appear here...</pre>
+  </div>
+</div>
+
+<script>
+    const output = document.getElementById("output");
+    const statusMessage = document.getElementById("status-message");
+
+    async function executeCommand(type) {
+        statusMessage.textContent = "";
+        let command = "";
+        
+        // --- 1. CONSTRUCT COMMAND STRING ---
+        if (type === 'insertOne') {
+            const trainNo = document.getElementById('train_no').value;
+            const trainName = document.getElementById('train_name').value.trim();
+            const destination = document.getElementById('destination').value.trim();
+
+            if (!trainNo || !trainName || !destination) {
+                statusMessage.innerHTML = "<span class='error'>⚠️ Please fill all required fields for Insert One.</span>";
+                return;
+            }
+            // Construct the command string for the Python backend
+            command = `insertOne({"train_no": ${parseInt(trainNo)}, "train_name": "${trainName}", "destination": "${destination}"})`;
+
+        } else if (type === 'find') {
+            const queryTrainNo = document.getElementById('query_train_no').value.trim();
+            if (queryTrainNo) {
+                // Find with query
+                command = `find({"train_no": ${parseInt(queryTrainNo)})`;
+            } else {
+                // Find all
+                command = `find({})`;
+            }
+
+        } else if (type === 'deleteOne') {
+            const queryTrainNo = document.getElementById('query_train_no').value.trim();
+            if (!queryTrainNo) {
+                statusMessage.innerHTML = "<span class='error'>⚠️ Enter a Train No in the Query field to delete.</span>";
+                return;
+            }
+            command = `deleteOne({"train_no": ${parseInt(queryTrainNo)})`;
+
+        } else if (type === 'countDocuments') {
+            command = `countDocuments()`;
+        } else {
+            return; // Should not happen
+        }
+
+        // --- 2. EXECUTE COMMAND ---
+        output.textContent = "⏳ Executing...";
+
+        try {
+            // Use URLSearchParams for simple form-data submission
+            const formData = new URLSearchParams();
+            formData.append('command', command);
+
+            const res = await fetch("/run", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData
+            });
+
+            if (!res.ok) {
+                output.innerHTML = "";
+                statusMessage.innerHTML = `<span class='error'>❌ Server error (${res.status})</span>`;
+                return;
+            }
+
+            const data = await res.json();
+
+            // --- 3. DISPLAY RESULTS ---
+            if (data.status === "success") {
+                statusMessage.innerHTML = `<span class='success'>✅ Command **${type}** successful.</span>`;
+                output.textContent = JSON.stringify(data.result, null, 2);
+            } else {
+                statusMessage.innerHTML = `<span class='error'>⚠️ Command **${type}** failed.</span>`;
+                output.textContent = JSON.stringify(data.result, null, 2);
+            }
+
+        } catch (err) {
+            output.innerHTML = "";
+            statusMessage.innerHTML = `<span class='error'>❌ Could not connect:\n${err.message}</span>`;
+        }
+    }
+</script>
+
+</body>
+</html>
