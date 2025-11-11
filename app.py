@@ -7,7 +7,8 @@ app = Flask(__name__)
 CORS(app)  # allows frontend requests (fixes 405 and CORS issues)
 
 # MongoDB connection (make sure MongoDB is running locally)
-client = MongoClient("mongodb+srv://harshithkvr_db_user:obpYVVSJQYSVs2nY@cluster0.c7ks0xa.mongodb.net/?appName=Cluster0")
+client = MongoClient(os.getenv("MONGO_URI"))
+
 db = client["RailwaySystem"]
 collection = db["Trains"]
 
