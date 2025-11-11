@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, jsonify
 from pymongo import MongoClient
 from flask_cors import CORS
 import json
+import os
+
 
 app = Flask(__name__)
 CORS(app)  # allows frontend requests (fixes 405 and CORS issues)
